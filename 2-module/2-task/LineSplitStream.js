@@ -4,7 +4,6 @@ const os = require('os');
 class LineSplitStream extends stream.Transform {
   constructor(options) {
     super(options);
-<<<<<<< HEAD
     this.buffer = [];
     this.encoding = options.encoding || 'utf8';
   }
@@ -21,14 +20,6 @@ class LineSplitStream extends stream.Transform {
       this.push(line);
     });
     callback();
-=======
-  }
-
-  _transform(chunk, encoding, callback) {
-  }
-
-  _flush(callback) {
->>>>>>> 67acf18f07b7b8c021bb778ac5af489a24e5a539
   }
 }
 
