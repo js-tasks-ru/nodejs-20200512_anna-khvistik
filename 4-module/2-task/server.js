@@ -3,11 +3,9 @@ const http = require('http');
 const path = require('path');
 const LimitSizeStream = require('./LimitSizeStream');
 const fs = require('fs');
-const util = require('util');
-const stream = require('stream');
 
+const {pipeline} = require('stream');
 const server = new http.Server();
-const pipeline = util.promisify(stream.pipeline);
 
 const MAX_FILE_SIZE = 1024 * 1024;
 
@@ -41,26 +39,42 @@ server.on('request', async (req, res) => {
 
       const limitSizeStream = new LimitSizeStream({limit: MAX_FILE_SIZE});
 
-      limitSizeStream.on('error', () => {
-        res.statusCode = 413;
-        res.end('File should be less than 1mb');
-      });
-
       const writeStream = fs.createWriteStream(filepath);
+
+      limitSizeStream.on('error', (err) => {
+        if (err.code === 'LIMIT_EXCEEDED') {
+          res.statusCode = 413;
+          res.end('File size exceeded');
+        } else {
+          res.statusCode = 500;
+          res.end('Internal server error');
+        }
+        fs.unlink(filepath, (err)=> {
+          console.error(err);
+        });
+        writeStream.destroy();
+        limitSizeStream.destroy();
+      });
 
       res.on('close', () => {
         if (res.finished) {
           return;
         }
-        fs.unlinkSync(filepath);
+        fs.unlink(filepath, (err)=> {
+          console.error(err);
+        });
         writeStream.destroy();
         limitSizeStream.destroy();
       });
 
-      await pipeline(req, limitSizeStream, writeStream);
-      res.statusCode = 201;
-      res.end();
-    break;
+      writeStream.on('close', ()=>{
+        res.statusCode = 201;
+        res.end();
+      });
+
+      req.pipe(limitSizeStream).pipe(writeStream);
+      
+      break;
 
     default:
       res.statusCode = 501;
