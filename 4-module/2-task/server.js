@@ -4,7 +4,6 @@ const path = require('path');
 const LimitSizeStream = require('./LimitSizeStream');
 const fs = require('fs');
 
-const {pipeline} = require('stream');
 const server = new http.Server();
 
 const MAX_FILE_SIZE = 1024 * 1024;
@@ -49,9 +48,7 @@ server.on('request', async (req, res) => {
           res.statusCode = 500;
           res.end('Internal server error');
         }
-        fs.unlink(filepath, (err)=> {
-          console.error(err);
-        });
+        fs.unlink(filepath, ()=> {});
         writeStream.destroy();
         limitSizeStream.destroy();
       });
@@ -60,9 +57,7 @@ server.on('request', async (req, res) => {
         if (res.finished) {
           return;
         }
-        fs.unlink(filepath, (err)=> {
-          console.error(err);
-        });
+        fs.unlink(filepath, ()=> {});
         writeStream.destroy();
         limitSizeStream.destroy();
       });
@@ -73,7 +68,6 @@ server.on('request', async (req, res) => {
       });
 
       req.pipe(limitSizeStream).pipe(writeStream);
-      
       break;
 
     default:
