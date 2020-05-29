@@ -8,7 +8,7 @@ app.use(require('koa-bodyparser')());
 const Router = require('koa-router');
 const router = new Router();
 
-let subscribers = {};
+const subscribers = {};
 
 router.get('/subscribe', async (ctx, next) => {
   const id = Math.random();
@@ -29,12 +29,9 @@ router.post('/publish', async (ctx, next) => {
   }
 
   ctx.body = message;
-
   Object.values(subscribers).forEach((resolve) => {
     resolve(message);
   });
-
-  subscribers = {};
 });
 
 app.use(router.routes());
