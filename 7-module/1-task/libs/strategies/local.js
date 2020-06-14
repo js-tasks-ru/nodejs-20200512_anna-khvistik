@@ -7,11 +7,13 @@ module.exports = new LocalStrategy(
       const userByEmail = await User.findOne({email});
       if (!userByEmail) {
         done(null, false, 'Нет такого пользователя');
+        return;
       }
 
       const isPasswordCorrect = await userByEmail.checkPassword(password);
       if (!isPasswordCorrect) {
         done(null, false, 'Неверный пароль');
+        return;
       }
 
       done(null, userByEmail);
